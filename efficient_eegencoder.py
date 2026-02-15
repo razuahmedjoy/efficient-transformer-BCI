@@ -2,18 +2,7 @@
 =============================================================================
  EfficientEEGEncoder — Proposed Modifications for Thesis
 =============================================================================
- AUTHOR:  [Your Name]
- PURPOSE: An efficient variant of EEGEncoder that reduces memory and compute
-          while targeting maintained/improved performance and subject independence.
-          
- PROFESSOR'S DIRECTION:
-   "Focus on building/proposing an efficient (less memory and compute) 
-    transformer based model, while trying to improve the performance. 
-    Remember, another target is subject independence."
-   Reference: https://dl.acm.org/doi/full/10.1145/3530811
 
- THIS FILE IS ISOLATED FROM THE ORIGINAL CODEBASE.
- All modifications are marked with "# MODIFICATION:" comments.
 
  KEY CHANGES SUMMARY:
    1. Linear Attention      — O(n) instead of O(n²) attention complexity
