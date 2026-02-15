@@ -1,4 +1,4 @@
-# Thesis Progress Update — EEGEncoder: Efficient Transformer for BCI
+# Progress Update — EEGEncoder: Efficient Transformer for BCI
 
 **Date:** February 15, 2026  
 **Subject:** Progress Report on EEG-Based BCI Classification using Efficient Transformers
