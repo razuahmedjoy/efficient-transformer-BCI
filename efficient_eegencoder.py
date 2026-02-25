@@ -2,7 +2,18 @@
 =============================================================================
  EfficientEEGEncoder — Proposed Modifications for Thesis
 =============================================================================
+ AUTHOR:  [Your Name]
+ PURPOSE: An efficient variant of EEGEncoder that reduces memory and compute
+          while targeting maintained/improved performance and subject independence.
+          
+ PROFESSOR'S DIRECTION:
+   "Focus on building/proposing an efficient (less memory and compute) 
+    transformer based model, while trying to improve the performance. 
+    Remember, another target is subject independence."
+   Reference: https://dl.acm.org/doi/full/10.1145/3530811
 
+ THIS FILE IS ISOLATED FROM THE ORIGINAL CODEBASE.
+ All modifications are marked with "# MODIFICATION:" comments.
 
  KEY CHANGES SUMMARY:
    1. Linear Attention      — O(n) instead of O(n²) attention complexity
@@ -343,9 +354,9 @@ class EfficientEEGEncoder(nn.Module):
     │ Component            │ Original             │ Efficient (Ours)             │
     ├──────────────────────┼──────────────────────┼──────────────────────────────┤
     │ Attention            │ Full O(n²) Llama     │ Linear O(n) attention        │
-    │ Parallel Branches    │ 5                    │ 3 (configurable)             │
-    │ Transformer per      │ 5 separate copies    │ 1 shared transformer         │
-    │ branch               │                      │                              │
+    │ Parallel Branches    │ 5                    │ 5 (restored from 3)          │
+    │ Transformer per      │ 5 Llama copies       │ 5 lightweight copies         │
+    │ branch               │ (heavy, ~41K params) │ (our EfficientTransformer)   │
     │ ConvBlock            │ Standard Conv2d      │ Depthwise Separable Conv2d   │
     │ Rotary Embeddings    │ Yes (from Llama)     │ No (fixed-length EEG)        │
     │ Causal Mask          │ Yes (from Llama)     │ No (classification task)     │
@@ -361,15 +372,24 @@ class EfficientEEGEncoder(nn.Module):
         use_gradient_ckpt: If True, use gradient checkpointing (default: False)
     """
     def __init__(self, n_classes=4, in_chans=22, in_samples=1125,
-                 # MODIFICATION 2: Reduced from 5 to 3 branches
-                 n_branches=3,
+                 # ===== IMPROVEMENT V2 =====
+                 # CHANGED: Restored to 5 branches (was 3 in v1)
+                 # Reason: 5 branches give better ensemble diversity,
+                 # which was likely the main cause of accuracy drop
+                 n_branches=5,
                  hidden_size=32,
                  eegn_F1=16, eegn_D=2, eegn_kernelSize=64,
                  eegn_poolSize=7, eegn_dropout=0.3,
                  tcn_depth=2, tcn_kernelSize=4, tcn_filters=32,
                  tcn_dropout=0.3, tcn_activation='elu',
-                 # MODIFICATION 4: Share transformer across branches
-                 share_transformer=True,
+                 # ===== IMPROVEMENT V2 =====
+                 # CHANGED: Separate transformers per branch (was shared in v1)
+                 # Reason: Shared transformer forced all branches to learn
+                 # identical features, killing diversity. Now each branch
+                 # has its own lightweight transformer (still much smaller
+                 # than Llama since we removed rotary embed, causal mask,
+                 # vocab embedding, and LM head)
+                 share_transformer=False,
                  # MODIFICATION 5: Gradient checkpointing
                  use_gradient_ckpt=False,
                  fuse='average'):
