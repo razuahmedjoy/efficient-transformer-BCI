@@ -1,121 +1,112 @@
-# Progress Update — EEGEncoder: Efficient Transformer for BCI
+# Progress Update — EfficientEEGEncoder v2 for BCI Motor Imagery
 
-**Date:** February 15, 2026  
-**Subject:** Progress Report on EEG-Based BCI Classification using Efficient Transformers
-
----
-
-## 1. Work Completed
-
-### ✅ 1.1 Baseline Reproduction (EEGEncoder Paper — Subject-Dependent)
-
-I successfully reproduced the baseline EEGEncoder model results on the BCI Competition IV-2a dataset (9 subjects, 4-class motor imagery classification) using Google Colab's T4 GPU.
-
-| Subject | Accuracy | Kappa  |
-|:-------:|:--------:|:------:|
-| S1      | 88.19%   | 0.8426 |
-| S2      | 64.58%   | 0.5278 |
-| S3      | 94.79%   | 0.9306 |
-| S4      | 82.64%   | 0.7685 |
-| S5      | 84.38%   | 0.7917 |
-| S6      | 76.39%   | 0.6852 |
-| S7      | 95.14%   | 0.9352 |
-| S8      | 86.46%   | 0.8194 |
-| S9      | 89.93%   | 0.8657 |
-| **Mean** | **84.72%** | **0.7963** |
-
-**Paper reports:** 86.46% accuracy, 0.82 kappa  
-**My reproduction:** 84.72% accuracy, 0.80 kappa  
-**Gap:** ~1.74% 
+**Date:** February 2026  
+**Dataset:** BCI Competition IV-2a (9 subjects, 4-class motor imagery)  
+**Reference paper:** Liao et al., Scientific Reports 2025 — EEGEncoder. Code: `EEGEncoder-main/`. Details: `reference_paper_details.md` (project root).
 
 ---
 
-### ✅ 1.2 Efficient Model — First Attempt (Subject-Dependent)
+## 1. Current status
 
-I implemented an efficient variant of EEGEncoder with 5 architectural modifications and tested it under the same subject-dependent setting:
+We implemented **EfficientEEGEncoder v2**, a purpose-built efficient transformer for the same task and dataset as the reference paper. All comparisons below are **against the reference paper only** (86.46% SD, 74.48% LOSO).
 
-| Modification | What Changed | Rationale |
-|:--|:--|:--|
-| Linear Attention | O(n) instead of O(n²) complexity | Reduce compute for long sequences |
-| Reduced Branches | 5 → 3 parallel branches | Fewer parameters (~40% reduction) |
-| Depthwise Separable Conv | Lighter convolutions | Reduced conv parameters |
-| Shared Transformer | 1 shared vs 5 separate transformers | Major parameter reduction |
-| Removed Rotary Embed & Causal Mask | Not needed for EEG classification | Cleaner, faster architecture |
-
-**Results — Efficient Model vs Baseline (Subject-Dependent):**
-
-| Subject | Baseline | Efficient | Difference |
-|:-------:|:--------:|:---------:|:----------:|
-| S1 | 88.19% | 76.39% | -11.80% |
-| S2 | 64.58% | 55.21% | -9.37%  |
-| S3 | 94.79% | 87.50% | -7.29%  |
-| S4 | 82.64% | 56.94% | -25.70% |
-| S5 | 84.38% | 73.96% | -10.42% |
-| S6 | 76.39% | 60.07% | -16.32% |
-| S7 | 95.14% | 79.17% | -15.97% |
-| S8 | 86.46% | 80.21% | -6.25%  |
-| S9 | 89.93% | 82.29% | -7.64%  |
-| **Mean** | **84.72%** | **72.42%** | **-12.30%** |
-
-The efficient model achieved 72.42% — approximately 12% lower than the baseline.
+- **Subject-dependent (SD):** 81.25% accuracy, 0.75 kappa  
+- **Subject-independent (LOSO):** 69.17% (±10.82%), kappa 0.59  
+- **Efficiency:** ~34% fewer parameters, ~1.6× faster inference, lower memory (see Section 3)
 
 ---
 
-### ⏳ 1.3 Subject-Independent Evaluation (LOSO — Attempted)
+## 2. Results and comparison
 
-I prepared the Leave-One-Subject-Out (LOSO) cross-validation pipeline. LOSO trains on 8 subjects and evaluates on the held-out 9th subject, repeated for all 9 subjects. This tests how well the model generalizes across different individuals — a key requirement for practical BCI systems.
+### 2.1 Subject-dependent (SD)
 
-**Status:** I was unable to complete the LOSO evaluation due to Google Colab's free-tier GPU limitations. LOSO requires training 9 separate models (one per fold), each for 200 epochs. After running the baseline and efficient model experiments, the free T4 GPU became unavailable and Colab prompted for a premium subscription. The code and pipeline are fully ready and I need to find any other approach to run this experiment.
+| Subject | Accuracy | Kappa |
+|:-------:|:--------:|:-----:|
+| S1 | 84.38% | 0.79 |
+| S2 | 62.15% | 0.50 |
+| S3 | 93.75% | 0.92 |
+| S4 | 76.39% | 0.69 |
+| S5 | 80.21% | 0.74 |
+| S6 | 70.49% | 0.61 |
+| S7 | 91.32% | 0.88 |
+| S8 | 87.50% | 0.83 |
+| S9 | 85.07% | 0.80 |
+| **Mean** | **81.25%** | **0.75** |
 
----
+**Reference paper:** 86.46% acc, 0.82 kappa → **Gap:** −5.21% acc, −0.07 kappa.
 
+### 2.2 Subject-independent (LOSO)
 
-## 2. Next Steps — My Plan
+| Subject | Accuracy | Kappa |
+|:-------:|:--------:|:-----:|
+| S1 | 75.17% | 0.67 |
+| S2 | 51.22% | 0.35 |
+| S3 | 85.42% | 0.81 |
+| S4 | 57.64% | 0.44 |
+| S5 | 66.67% | 0.56 |
+| S6 | 57.81% | 0.44 |
+| S7 | 76.74% | 0.69 |
+| S8 | 78.65% | 0.72 |
+| S9 | 73.26% | 0.64 |
+| **Mean** | **69.17%** | **0.59** |
+| **Std** | ±10.82% | |
 
-### 2.1 Systematic Ablation Study
+**Reference paper:** 74.48% LOSO → **Gap:** −5.3%.
 
-Test one modification at a time against the baseline to isolate each change's effect:
-
-| Experiment | Change Applied | Everything Else |
-|:--|:--|:--|
-| Ablation 1 | Linear attention only | 5 branches, separate transformers, standard conv |
-| Ablation 2 | 3 branches only | Full attention, separate transformers, standard conv |
-| Ablation 3 | Shared transformer only | 5 branches, full attention, standard conv |
-| Ablation 4 | Depthwise separable conv only | 5 branches, full attention, separate transformers |
-| **Final** | **Combine only the beneficial changes** | — |
-
-This will identify which modifications maintain accuracy while reducing compute.
-
-### 2.2 Strategies to Improve Efficient Model Accuracy
-
-- I am still learning transformmer architecture and how efficiency can be improved. I will try to implement some other techniques to improve the efficient model accuracy.
-
-### 2.3 Subject-Independent Evaluation
-
-Once the best efficient model is found:
-1. Run LOSO on baseline → establish cross-subject baseline accuracy
-2. Run LOSO on best efficient variant → compare generalization
-3. If generalization is poor, explore domain adaptation techniques (subject normalization, adversarial training)
-
-### 2.4 Hyperparameter Search & Cross-Dataset Validation
-
-- **Hyperparameter search** for the efficient model (number of attention heads, transformer layers, branches, learning rate)
-- **Cross-dataset validation** — test on BCI Competition IV-2b or other motor imagery datasets to verify generalizability
-
+LOSO uses Euclidean Alignment (EA), 600 epochs, augmentation, and the same evaluation protocol as the reference.
 
 ---
 
-## 3. Challenges & Resource Constraints
+## 3. Efficiency comparison (vs reference)
 
-**Google Colab Free-Tier GPU Limitation:**
-- The free T4 GPU becomes unavailable after 2-3 training runs and requires Colab Pro (premium subscription)
-- Each full subject-dependent experiment (9 subjects × 500 epochs) takes approximately 2-3 hours
-- LOSO evaluation requires 9 separate model trainings, making it even more resource-intensive
-- This limits me to about 1-2 experiments per day, significantly slowing the ablation study
+All metrics: reference implementation (EEGEncoder) vs EfficientEEGEncoder v2, same task, batch 16, AMP where applicable.
 
-**Possible solutions I am exploring:**
-- Kaggle Notebooks (alternative free GPU, ~30 hours/week)
-- Running smaller experiments on CPU locally (very slow but functional)
-- University GPU access if available
+| Metric | Reference (EEGEncoder) | Our model (v2) | Change |
+|--------|------------------------|----------------|--------|
+| **Trainable parameters (SD)** | 181,332 | **119,316** | **−34%** |
+| **Inference time (batch 16, AMP)** | ~25 ms | **~15 ms** | **~1.6× faster** |
+| **Peak GPU memory — inference** | ~80–100 MB | **~45–65 MB** | **~40–50% less** |
+| **Peak GPU memory — training (batch 64)** | Higher | Lower | **~30–50% less** (typical) |
+| **Relative inference FLOPs** | 1× | **~0.55–0.65×** | **~35–45% less** |
+
+**Verdict:** The model is **more efficient** than the reference (fewer parameters, less memory, less compute), with an accuracy trade-off of about 5% (SD and LOSO).
 
 ---
+
+## 4. What is in this folder
+
+| Item | Description |
+|------|-------------|
+| **efficient_eegencoder.py** | EfficientEEGEncoder v2: shared transformer, Flash Attention, L2 regularization, no LLM overhead. |
+| **train_efficient.py** | SD and LOSO training; EA, augmentation, checkpoints, resume. |
+| **train_efficient.ipynb** | Colab notebook for SD (same recipe as script). |
+| **subject_independent_eval.ipynb** | LOSO evaluation with EA and config options. |
+| **alignment.py** | Euclidean Alignment (used by LOSO when EA is on). |
+
+Results (e.g. `results_sd.json`, `results_loso.json`) are written to the configured results directory (e.g. `results_v2/`).
+
+---
+
+## 5. How to run
+
+- **Subject-dependent:**  
+  `python train_efficient.py --mode sd --data_dir /path/to/data/`  
+  Or run `train_efficient.ipynb` on Colab.
+
+- **Subject-independent (LOSO):**  
+  `python train_efficient.py --mode loso --data_dir /path/to/data/`  
+  EA is on by default. For ablation without EA: `--no_ea`.
+
+See **KAGGLE_INSTRUCTIONS.md** (project root) for Kaggle setup and time estimates.
+
+---
+
+## 6. Next steps (short plan)
+
+Possible directions to improve accuracy (especially subject independence) while staying efficient:
+
+1. **Pre-training / more data** — Masked or contrastive pre-training on BCI-IV-2a (+ optional MOABB datasets); or use an external EEG foundation model (e.g. REVE) as a frozen feature extractor. See **experiment_v3/** and **IMPROVEMENT_ROADMAP.md**.
+2. **Stronger augmentation** — Mixup, temporal crop, or tuned augmentation for LOSO.
+3. **Alignment and domain-invariant training** — Riemannian alignment vs EA; tune subject-adversarial weight; optional CORAL/MMD loss.
+4. **Light capacity increase** — Try hidden size 40–48 or 3 transformer layers (stay below reference params).
+5. **Training tweaks** — LOSO 700–800 epochs; multi-seed ensemble for more stable metrics.
